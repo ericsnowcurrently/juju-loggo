@@ -4,11 +4,8 @@
 package loggo
 
 import (
-	"fmt"
 	"reflect"
-	"runtime"
 	"strings"
-	"time"
 )
 
 // A Logger represents a logging module. It has an associated logging
@@ -146,30 +143,8 @@ func (logger Logger) LogCallf(calldepth int, level Level, message string, args .
 	if !logger.willWrite(level) {
 		return
 	}
-	// Gather time, and filename, line number.
-	now := time.Now() // get this early.
-	// Param to Caller is the call depth.  Since this method is called from
-	// the Logger methods, we want the place that those were called from.
-	_, file, line, ok := runtime.Caller(calldepth + 1)
-	if !ok {
-		file = "???"
-		line = 0
-	}
-	// Trim newline off format string, following usual
-	// Go logging conventions.
-	if len(message) > 0 && message[len(message)-1] == '\n' {
-		message = message[0 : len(message)-1]
-	}
-
-	// To avoid having a proliferation of Info/Infof methods,
-	// only use Sprintf if there are any args, and rely on the
-	// `go vet` tool for the obvious cases where someone has forgotten
-	// to provide an arg.
-	formattedMessage := message
-	if len(args) > 0 {
-		formattedMessage = fmt.Sprintf(message, args...)
-	}
-	logger.writer.Write(level, logger.impl.name, file, line, now, formattedMessage)
+	rec := NewRecordf(calldepth+1, level, logger.impl.name, message, args...)
+	logger.writer.Write(rec)
 }
 
 func (logger Logger) willWrite(level Level) bool {
