@@ -79,3 +79,51 @@ func (fw *formattingWriter) WriteRecord(rec Record) {
 	}
 	fmt.Fprintln(fw.writer, logLine)
 }
+
+// TeeWriter is a MinLevelWriter that writes to a list of writers,
+// in order.
+type TeeWriter struct {
+	combinedMinLevel Level
+	writers          []Writer
+}
+
+// NewTeeWriter creates a new TeeWriter that will write to the given
+// writers, in the order they were provided.
+func NewTeeWriter(writers ...Writer) *TeeWriter {
+	tw := &TeeWriter{
+		combinedMinLevel: UNSPECIFIED,
+		writers:          writers,
+	}
+	if len(writers) > 0 {
+		combinedLevel := CRITICAL
+		for _, w := range writers {
+			mlw, ok := w.(MinLevelWriter)
+			if !ok {
+				combinedLevel = UNSPECIFIED
+				break
+			}
+			minLevel := mlw.MinLogLevel()
+			if minLevel < combinedLevel {
+				combinedLevel = minLevel
+			}
+		}
+		tw.combinedMinLevel = combinedLevel
+	}
+	return tw
+}
+
+// MinLogLevel returns the minimum log level at which at least one of
+// the registered writers will write.
+func (tw *TeeWriter) MinLogLevel() Level {
+	return tw.combinedMinLevel
+}
+
+// Write implements Writer, sending the message to each registered writer.
+func (tw *TeeWriter) Write(rec Record) {
+	for _, w := range tw.writers {
+		if mlw, ok := w.(MinLevelWriter); !ok || !IsLevelEnabled(mlw, rec.Level) {
+			continue
+		}
+		w.Write(rec)
+	}
+}
