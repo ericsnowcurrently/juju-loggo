@@ -144,7 +144,7 @@ func (logger Logger) LogCallf(calldepth int, level Level, message string, args .
 		return
 	}
 	rec := NewRecordf(calldepth+1, level, logger.impl.name, message, args...)
-	logger.writer.Write(rec)
+	logger.writer.WriteRecord(rec)
 }
 
 func (logger Logger) willWrite(level Level) bool {
