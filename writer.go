@@ -176,3 +176,10 @@ func (w *StdioWriter) WriteRecord(rec Record) {
 		w.Err.WriteRecord(rec)
 	}
 }
+
+// DiscardWriter throws away records.
+type DiscardWriter struct{}
+
+// WriteRecord is a no-op.
+func (DiscardWriter) WriteRecord(Record) {
+}
