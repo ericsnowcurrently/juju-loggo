@@ -183,3 +183,25 @@ type DiscardWriter struct{}
 // WriteRecord is a no-op.
 func (DiscardWriter) WriteRecord(Record) {
 }
+
+type ChannelWriter struct {
+	Records <-chan Record
+}
+
+func (w ChannelWriter) WriteRecord(rec Record) {
+	select {
+	case w.Records = <-rec:
+	default:
+	}
+}
+
+type MemoryWriter struct {
+	Records interface {
+		Add(Record)
+	}
+}
+
+// WriteRecord stores the record in memory.
+func (w *MemoryWriter) WriteRecord(rec Record) {
+	w.Records.Add(rec)
+}
