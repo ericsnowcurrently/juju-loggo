@@ -127,3 +127,52 @@ func (tw *TeeWriter) Write(rec Record) {
 		w.Write(rec)
 	}
 }
+
+// ModuleWriter only writes log messages for the named module.
+type ModuleWriter struct {
+	RecordWriter
+
+	// Name is the module name to look for.
+	Name string
+}
+
+// Write writes the record to the wrapped writer, but only if the module
+// name matches.
+func (w *ModuleWriter) WriteRecord(rec Record) {
+	if rec.Module == w.Name {
+		w.RecordWriter.Write(rec)
+	}
+}
+
+// StdioWriter writes log messages at WARNING, ERROR, and CRITICAL to
+// a stderr writer. The rest go to a stdout writer.
+// LogWriter filters the log messages for name.
+type StdioWriter struct {
+	// Out is the writer to use for stdout.
+	Out RecordWriter
+
+	// Err is the writer to use for stderr.
+	Err RecordWriter
+}
+
+// NewStdioWriter returns a new StdioWriter with formatting writers
+// wrapping the provided io.Writers.
+func NewStdioWriter(out, err io.Writer, formatter Formatter) *StdioWriter {
+	if formatter == nil {
+		formatter = &MinimalFormatter{}
+	}
+	return &StdioWriter{
+		Out: NewFormattingWriter(out, formatter),
+		Err: NewFormattingWriter(err, formatter),
+	}
+}
+
+// WriteRecord writes to the stdout writer if the log level is INFO
+// or below. The stderr writer is used otherwise.
+func (w *StdioWriter) WriteRecord(rec Record) {
+	if rec.Level <= INFO {
+		w.Out.WriteRecord(rec)
+	} else {
+		w.Err.WriteRecord(rec)
+	}
+}
