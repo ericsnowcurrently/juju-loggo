@@ -3,6 +3,11 @@
 
 package loggo
 
+import (
+	"io"
+	"time"
+)
+
 // TODO(ericsnow) The contents of this file can go away as soon as we
 // stop worrying about breaking compatibility.
 

@@ -6,7 +6,6 @@ package loggo
 import (
 	"fmt"
 	"io"
-	"time"
 )
 
 // defaultWriterName is the name of the writer default writer.
